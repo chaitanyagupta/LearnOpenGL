@@ -8,4 +8,6 @@ build/libglad.dylib: src/glad.c
 
 .PHONY: run
 run: build/hello-world
-	$<	
+	$<
+
+$(shell mkdir -p build)
