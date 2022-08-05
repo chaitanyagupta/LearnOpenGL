@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdio.h>
+#include <math.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -29,9 +30,10 @@ const char *vertexShaderSource = "#version 330 core\n"
 
 const char *fragmentShaderSource = "#version 330 core\n"
   "out vec4 FragColor;\n"
+  "uniform vec4 ourColor; // we set this variable in the OpenGL code.\n"
   "void main()\n"
   "{\n"
-  "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+  "    FragColor = ourColor;\n"
   "}\n";
 
 int makeShader(GLenum shaderType, const char *source, unsigned int *shader) {
@@ -87,6 +89,10 @@ int main()
       return -1;
     }
   //glViewport(0, 0, 800, 600);
+
+  int nrAttributes;
+  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+  printf("Max vertex attributes: %d\n", nrAttributes);
 
   unsigned int vertexShader;
   if (!makeShader(GL_VERTEX_SHADER, vertexShaderSource, &vertexShader)) {
@@ -156,7 +162,15 @@ int main()
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT);
 
+      // activate the shader
       glUseProgram(shaderProgram);
+
+      // update the uniform color
+      float timeValue = glfwGetTime();
+      float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+      int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+      glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
       glBindVertexArray(VAO);
       //glDrawArrays(GL_TRIANGLES, 0, sizeof(indices));
       glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
