@@ -4,6 +4,28 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <math.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <libgen.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/param.h>
+
+off_t fsize(const char *filename) {
+    struct stat st;
+
+    if (stat(filename, &st) == 0)
+        return st.st_size;
+
+    return -1;
+}
+
+const char *relative_path(char *dst, char *base, char *target) {
+  dirname_r(base, dst);
+  strlcat(dst, "/", MAXPATHLEN);
+  strlcat(dst, target, MAXPATHLEN);
+  return dst;
+}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -20,29 +42,24 @@ void processInput(GLFWwindow *window)
 // info log - for storing error messages, etc.
 char infoLog[512];
 
-const char *vertexShaderSource = "#version 330 core\n"
-  "layout (location = 0) in vec3 aPos;\n"
-  "layout (location = 1) in vec3 aColor; // the color variable has attribute position 1\n"
-  "out vec3 ourColor; // output a color to the fragment shader\n"
-  "void main()\n"
-  "{\n"
-  "    gl_Position = vec4(aPos, 1.0);\n"
-  "    ourColor = aColor; // set ourColor to the input color we got from the vertex data\n"
-  "}\0";
-
-
-const char *fragmentShaderSource = "#version 330 core\n"
-  "out vec4 FragColor;\n"
-  "in vec3 ourColor;\n"
-  "void main()\n"
-  "{\n"
-  "    FragColor = vec4(ourColor, 1.0);\n"
-  "}\n";
-
-int makeShader(GLenum shaderType, const char *source, unsigned int *shader) {
+int makeShader(GLenum shaderType, const char *path, unsigned int *shader) {
+  off_t filesize = fsize(path);
+  char *source = malloc(filesize + 1);
+  FILE *file = fopen(path, "r");
+  if (file == NULL) {
+    perror("fopen");
+    return 0;
+  }
+  if (fread(source, sizeof(char), filesize, file) != filesize) {
+    perror("fread");
+    return 0;
+  }
+  source[filesize] = 0;
   *shader = glCreateShader(shaderType);
   glShaderSource(*shader, 1, &source, NULL);
   glCompileShader(*shader);
+  free(source);
+  fclose(file);
   int success;
   glGetShaderiv(*shader, GL_COMPILE_STATUS, &success);
   if (!success) {
@@ -97,14 +114,16 @@ int main()
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
   printf("Max vertex attributes: %d\n", nrAttributes);
 
+  char path_dst[MAXPATHLEN];
+
   unsigned int vertexShader;
-  if (!makeShader(GL_VERTEX_SHADER, vertexShaderSource, &vertexShader)) {
+  if (!makeShader(GL_VERTEX_SHADER, relative_path(path_dst, __FILE__, "hello-world.vert"), &vertexShader)) {
     printf("Vertex shader could not be made: %s\n", infoLog);
     return 1;
   }
 
   unsigned int fragmentShader;
-  if (!makeShader(GL_FRAGMENT_SHADER, fragmentShaderSource, &fragmentShader)) {
+  if (!makeShader(GL_FRAGMENT_SHADER, relative_path(path_dst, __FILE__, "hello-world.frag"), &fragmentShader)) {
     printf("Fragment shader could not be made: %s\n", infoLog);
     return 1;
   }
@@ -124,8 +143,8 @@ int main()
     // positions         // colors
     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
     -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
-    0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
-  };  
+    0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top
+  };
 
   unsigned int indices[] = {  // note that we start from 0!
     0, 1, 2,   // first triangle
@@ -151,7 +170,7 @@ int main()
 
   // color attribute
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3* sizeof(float)));
-  glEnableVertexAttribArray(1);  
+  glEnableVertexAttribArray(1);
 
   // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
   glBindBuffer(GL_ARRAY_BUFFER, 0);
