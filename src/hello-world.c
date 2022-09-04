@@ -86,21 +86,23 @@ int makeShaderProgram(unsigned int vertexShader, unsigned int fragmentShader, un
   return success;
 }
 
-unsigned int loadTexture() {
+unsigned int loadTexture(const char *path, GLenum unit, unsigned int rgb, int flip) {
   unsigned int texture;
+  glActiveTexture(unit);
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
   // set the texture wrapping/filtering options (on the currently bound texture object)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  stbi_set_flip_vertically_on_load(flip);
   // load and generate the texture
   int width, height, nrChannels;
-  unsigned char *data = stbi_load("res/container.jpg", &width, &height, &nrChannels, 0);
+  unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 0);
   if (data)
     {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+      glTexImage2D(GL_TEXTURE_2D, 0, rgb, width, height, 0, rgb, GL_UNSIGNED_BYTE, data);
       glGenerateMipmap(GL_TEXTURE_2D);
     }
   else
@@ -138,7 +140,8 @@ int main()
     }
   //glViewport(0, 0, 800, 600);
 
-  unsigned int texture = loadTexture();
+  unsigned int texture1 = loadTexture("res/container.jpg", GL_TEXTURE0, GL_RGB, 0);
+  unsigned int texture2 = loadTexture("res/awesomeface.png", GL_TEXTURE1, GL_RGBA, 1);
 
   int nrAttributes;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
@@ -163,6 +166,13 @@ int main()
     printf("Shader program could not be made: %s\n", infoLog);
     return 1;
   }
+
+  // activate the shader
+  glUseProgram(shaderProgram);
+
+  glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+  glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1);
+
 
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
@@ -214,26 +224,24 @@ int main()
   // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
   // glBindVertexArray(0);
 
+  // rendering
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  //glDrawArrays(GL_TRIANGLES, 0, sizeof(indices));
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+  // swap buffers
+  glfwSwapBuffers(window);
+
   // The event loop
   while(!glfwWindowShouldClose(window))
     {
       // input
       processInput(window);
 
-      // rendering
-      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT);
-
-      // activate the shader
-      glUseProgram(shaderProgram);
-
-      //glDrawArrays(GL_TRIANGLES, 0, sizeof(indices));
-      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
       // call events
-      glfwSwapBuffers(window);
-
-      // swap buffers
       glfwPollEvents();
     }
 
