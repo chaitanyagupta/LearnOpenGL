@@ -140,8 +140,56 @@ int main()
     }
   //glViewport(0, 0, 800, 600);
 
-  unsigned int texture1 = loadTexture("res/container.jpg", GL_TEXTURE0, GL_RGB, 0);
-  unsigned int texture2 = loadTexture("res/awesomeface.png", GL_TEXTURE1, GL_RGBA, 1);
+  unsigned int texture1, texture2;
+  int width, height, nrChannels;
+  unsigned char *imgData;
+
+  // load texture 1
+  glActiveTexture(GL_TEXTURE0);
+  glGenTextures(1, &texture1);
+  glBindTexture(GL_TEXTURE_2D, texture1);
+  // set the texture wrapping/filtering options (on the currently bound texture object)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  stbi_set_flip_vertically_on_load(0);
+  // load and generate the texture
+  imgData = stbi_load("res/container.jpg", &width, &height, &nrChannels, 0);
+  if (imgData)
+    {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, imgData);
+      glGenerateMipmap(GL_TEXTURE_2D);
+    }
+  else
+    {
+      fprintf(stderr, "Failed to load texture\n");
+    }
+  stbi_image_free(imgData);
+
+  // load texture 2
+  glActiveTexture(GL_TEXTURE1);
+  glGenTextures(1, &texture2);
+  glBindTexture(GL_TEXTURE_2D, texture2);
+  // set the texture wrapping/filtering options (on the currently bound texture object)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  stbi_set_flip_vertically_on_load(1);
+  // load and generate the texture
+  imgData = stbi_load("res/awesomeface.png", &width, &height, &nrChannels, 0);
+  if (imgData)
+    {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imgData);
+      glGenerateMipmap(GL_TEXTURE_2D);
+    }
+  else
+    {
+      fprintf(stderr, "Failed to load texture\n");
+    }
+  stbi_image_free(imgData);
+
 
   int nrAttributes;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
