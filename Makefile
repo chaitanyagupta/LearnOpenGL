@@ -1,7 +1,7 @@
 CFLAGS = -Iinclude -Lbuild
 
 build/hello-world: src/hello-world.c build/libglad.dylib
-	cc $(CFLAGS) `pkg-config --cflags --libs glfw3` -lglad -o $@ $<
+	cc $(CFLAGS) `pkg-config --cflags --libs glfw3` `pkg-config --cflags cglm` -lglad -o $@ $<
 
 build/libglad.dylib: src/glad.c
 	cc -c $(CFLAGS) -o $@ $<

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/param.h>
+#include <cglm/cglm.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -190,7 +191,6 @@ int main()
     }
   stbi_image_free(imgData);
 
-
   int nrAttributes;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
   printf("Max vertex attributes: %d\n", nrAttributes);
@@ -217,6 +217,8 @@ int main()
 
   // activate the shader
   glUseProgram(shaderProgram);
+
+  unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
 
   glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
   glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1);
@@ -272,15 +274,8 @@ int main()
   // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
   // glBindVertexArray(0);
 
-  // rendering
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
 
   //glDrawArrays(GL_TRIANGLES, 0, sizeof(indices));
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-  // swap buffers
-  glfwSwapBuffers(window);
 
   // The event loop
   while(!glfwWindowShouldClose(window))
@@ -288,6 +283,21 @@ int main()
       // input
       processInput(window);
 
+      // rendering
+      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      // matrix operations
+      mat4 trans;
+      glm_mat4_identity(trans);
+      glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
+      glm_rotate(trans, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
+      glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
+
+      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+      
+      // swap buffers
+      glfwSwapBuffers(window);
 
       // call events
       glfwPollEvents();
