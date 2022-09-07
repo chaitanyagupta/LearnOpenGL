@@ -218,7 +218,9 @@ int main()
   // activate the shader
   glUseProgram(shaderProgram);
 
-  unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
+  unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
+  unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
+  unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection");
 
   glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
   glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1);
@@ -288,11 +290,20 @@ int main()
       glClear(GL_COLOR_BUFFER_BIT);
 
       // matrix operations
-      mat4 trans;
-      glm_mat4_identity(trans);
-      glm_translate(trans, (vec3){0.5f, -0.5f, 0.0f});
-      glm_rotate(trans, (float)glfwGetTime(), (vec3){0.0f, 0.0f, 1.0f});
-      glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
+      mat4 model;
+      glm_mat4_identity(model);
+      glm_rotate(model, glm_rad(-55.0f), (vec3){1.0f, 0.0f, 0.0f});
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
+
+      mat4 view;
+      glm_mat4_identity(view);
+      glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+      glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
+
+      mat4 projection;
+      glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
+      glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, (float *)projection);
+      
 
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
       
