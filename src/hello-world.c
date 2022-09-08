@@ -296,8 +296,21 @@ int main()
   // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
   // glBindVertexArray(0);
 
+  vec3 cubePositions[] = {
+    { 0.0f,  0.0f,  0.0f}, 
+    { 2.0f,  5.0f, -15.0f}, 
+    {-1.5f, -2.2f, -2.5f},  
+    {-3.8f, -2.0f, -12.3f},  
+    { 2.4f, -0.4f, -3.5f},  
+    {-1.7f,  3.0f, -7.5f},  
+    { 1.3f, -2.0f, -2.5f},  
+    { 1.5f,  2.0f, -2.5f}, 
+    { 1.5f,  0.2f, -1.5f}, 
+    {-1.3f,  1.0f, -1.5f}  
+  };
 
-  glEnable(GL_DEPTH_TEST);  
+
+  glEnable(GL_DEPTH_TEST);
 
   // The event loop
   while(!glfwWindowShouldClose(window))
@@ -309,13 +322,6 @@ int main()
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      // matrix operations
-      mat4 model;
-      glm_mat4_identity(model);
-      glm_rotate(model, (float)glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
-      /* glm_rotate(model, glm_rad(-55.0f), (vec3){1.0f, 0.0f, 0.0f}); */
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
-
       mat4 view;
       glm_mat4_identity(view);
       glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
@@ -324,9 +330,20 @@ int main()
       mat4 projection;
       glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
       glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, (float *)projection);
-      
-      //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      glDrawArrays(GL_TRIANGLES, 0, 36);
+
+      //glBindVertexArray(VAO);
+      for (unsigned int i = 0; i < sizeof(cubePositions)/sizeof(cubePositions[0]); ++i) {
+        
+        // matrix operations
+        mat4 model;
+        glm_mat4_identity(model);
+        glm_translate(model, cubePositions[i]);
+        float angle = 20.0f * i; 
+        glm_rotate(model, glm_rad(angle), (vec3){1.0f, 0.3f, 0.5f});
+        //glm_rotate(model, (float)glfwGetTime(), (vec3){1.0f, 0.3f, 0.5f});
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+      }
       
       // swap buffers
       glfwSwapBuffers(window);
